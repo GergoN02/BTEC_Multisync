@@ -1,6 +1,6 @@
-import {app, BrowserWindow} from 'electron';
-import {join} from 'path';
-import {URL} from 'url';
+import { app, BrowserWindow, desktopCapturer, Menu } from 'electron';
+import { join } from 'path';
+import { URL } from 'url';
 
 async function createWindow() {
   const browserWindow = new BrowserWindow({
@@ -22,6 +22,50 @@ async function createWindow() {
    *
    * @see https://github.com/electron/electron/issues/25012 for the afford mentioned issue.
    */
+
+  const sendSelectedScreen = (item: Electron.DesktopCapturerSource) => {
+    browserWindow.webContents.send('SET_SOURCE_ID', item.id);
+  };
+
+  const createSourceList = (sources: Electron.DesktopCapturerSource[]) => {
+    const screenMenu = sources.map(item => {
+      return {
+        label: item.name,
+        click: () => {
+          sendSelectedScreen(item);
+        },
+      };
+    });
+
+    const menu = Menu.buildFromTemplate([
+      {
+        label: app.name,
+        submenu: [
+          { role: 'quit' },
+        ],
+      },
+      {
+        label: 'Screens',
+        submenu: screenMenu,
+      },
+    ]);
+
+    Menu.setApplicationMenu(menu);
+
+  };
+
+  browserWindow.webContents.on('did-finish-load', async () => {
+    await desktopCapturer.getSources({
+      types: ['screen'],
+    }).then((sources) => {
+
+      const availableScreens = sources;
+      createSourceList(availableScreens);
+      browserWindow.webContents.send('SET_SOURCE_ID', sources[0].id);
+    });
+  });
+
+
   browserWindow.on('ready-to-show', () => {
     browserWindow?.show();
 
@@ -45,6 +89,7 @@ async function createWindow() {
   return browserWindow;
 }
 
+
 /**
  * Restore an existing BrowserWindow or Create a new BrowserWindow.
  */
@@ -60,4 +105,6 @@ export async function restoreOrCreateWindow() {
   }
 
   window.focus();
+
+  return window;
 }
