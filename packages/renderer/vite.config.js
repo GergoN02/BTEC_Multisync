@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 import { renderer } from 'unplugin-auto-expose';
 import { join } from 'node:path';
 import { injectAppVersion } from '../../version/inject-app-version-plugin.mjs';
+import tailwindcss from 'tailwindcss';
 
 const PACKAGE_ROOT = __dirname;
 const PROJECT_ROOT = join( PACKAGE_ROOT, '../..' );
@@ -44,6 +45,7 @@ const config = {
     },
     plugins: [
         react(),
+        tailwindcss(),
         renderer.vite( {
             preloadEntry: join( PACKAGE_ROOT, '../preload/src/index.ts' ),
         } ),

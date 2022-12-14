@@ -2,5 +2,5 @@
  * @module preload
  */
 
-export { getScreenId } from './api/electron';
+export { getScreenId, getStream } from './api/electron';
 export { versions } from './versions';

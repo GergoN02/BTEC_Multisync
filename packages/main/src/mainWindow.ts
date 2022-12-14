@@ -1,4 +1,4 @@
-import { app, BrowserWindow, desktopCapturer, Menu } from 'electron';
+import { app, BrowserWindow, desktopCapturer, systemPreferences } from 'electron';
 import { join } from 'path';
 import { URL } from 'url';
 
@@ -6,7 +6,7 @@ async function createWindow() {
   const browserWindow = new BrowserWindow({
     show: false, // Use the 'ready-to-show' event to show the instantiated BrowserWindow.
     webPreferences: {
-      nodeIntegration: false,
+      nodeIntegration: true,
       contextIsolation: true,
       sandbox: false, // Sandbox disabled because the demo of preload script depend on the Node.js api
       webviewTag: false, // The webview tag is not recommended. Consider alternatives like an iframe or Electron's BrowserView. @see https://www.electronjs.org/docs/latest/api/webview-tag#warning
@@ -23,54 +23,26 @@ async function createWindow() {
    * @see https://github.com/electron/electron/issues/25012 for the afford mentioned issue.
    */
 
-  const sendSelectedScreen = (item: Electron.DesktopCapturerSource) => {
-    browserWindow.webContents.send('SET_SOURCE_ID', item.id);
-  };
-
-  const createSourceList = (sources: Electron.DesktopCapturerSource[]) => {
-    const screenMenu = sources.map(item => {
-      return {
-        label: item.name,
-        click: () => {
-          sendSelectedScreen(item);
-        },
-      };
-    });
-
-    const menu = Menu.buildFromTemplate([
-      {
-        label: app.name,
-        submenu: [
-          { role: 'quit' },
-        ],
-      },
-      {
-        label: 'Screens',
-        submenu: screenMenu,
-      },
-    ]);
-
-    Menu.setApplicationMenu(menu);
-
-  };
-
-  browserWindow.webContents.on('did-finish-load', async () => {
-    await desktopCapturer.getSources({
-      types: ['screen'],
-    }).then((sources) => {
-
-      const availableScreens = sources;
-      createSourceList(availableScreens);
-      browserWindow.webContents.send('SET_SOURCE_ID', sources[0].id);
-    });
-  });
-
 
   browserWindow.on('ready-to-show', () => {
     browserWindow?.show();
+    console.log(systemPreferences.getMediaAccessStatus('camera'));
+
+
+    desktopCapturer.getSources({
+      types: ['screen'],
+    }).then(sources => {
+      for (const source of sources) {
+        if (source.name === 'Screen 1') {
+          browserWindow.webContents.send('SET_SOURCE_ID', source.id);
+          return;
+        }
+      }
+
+    });
 
     if (import.meta.env.DEV) {
-      browserWindow?.webContents.openDevTools();
+      browserWindow?.webContents.openDevTools({ mode: 'detach' });
     }
   });
 
