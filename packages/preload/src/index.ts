@@ -2,5 +2,5 @@
  * @module preload
  */
 
-export {sha256sum} from './nodeCrypto';
-export {versions} from './versions';
+export { getScreenId } from './api/electron';
+export { versions } from './versions';
